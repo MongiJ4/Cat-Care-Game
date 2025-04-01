@@ -1,0 +1,215 @@
+// Create challenge text
+const challengeText = document.createElement("p");
+challengeText.innerHTML = "<strong>Keep your cat's mood between 95 and 100 for 5 minutes to earn $100!</strong>";
+challengeText.style.textAlign = "center";
+challengeText.style.fontSize = "16px";
+challengeText.style.fontWeight = "bold";
+document.body.appendChild(challengeText);
+
+// Create UI containers
+const container = document.createElement("div");
+container.style.position = "fixed";
+container.style.top = "50%";
+container.style.left = "50%";
+container.style.transform = "translate(-50%, -50%)";
+container.style.display = "flex";
+container.style.gap = "20px";
+document.body.appendChild(container);
+
+// Create Cat Panel
+const catPanel = document.createElement("div");
+catPanel.style.background = "white";
+catPanel.style.padding = "15px";
+catPanel.style.border = "2px solid black";
+catPanel.style.fontFamily = "Arial, sans-serif";
+catPanel.style.textAlign = "center";
+catPanel.style.boxShadow = "5px 5px 10px rgba(0,0,0,0.3)";
+catPanel.style.borderRadius = "10px";
+container.appendChild(catPanel);
+
+// Create Player Panel
+const playerPanel = document.createElement("div");
+playerPanel.style.background = "white";
+playerPanel.style.padding = "15px";
+playerPanel.style.border = "2px solid black";
+playerPanel.style.fontFamily = "Arial, sans-serif";
+playerPanel.style.textAlign = "center";
+playerPanel.style.boxShadow = "5px 5px 10px rgba(0,0,0,0.3)";
+playerPanel.style.borderRadius = "10px";
+container.appendChild(playerPanel);
+
+// Game variables
+let catMood = 100;
+let catHealth = 100;
+let catFood = 3;
+let catWater = 3;
+let catAlive = true;
+let catSad = false;
+let catAsleep = false;
+
+let playerHealth = 100;
+let money = 10;
+
+let happinessTimer = 0;
+let happinessInterval;
+
+// Update UI function
+function updateUI() {
+    let catStatus = "";
+    if (!catAlive) {
+        catStatus = `<p style="color: red; font-weight: bold;">Your cat has died... 💀</p>`;
+    } else if (catMood === 0) {
+        catStatus = `<p style="color: orange; font-weight: bold;">Your cat is sad and might leave! 😿</p>`;
+        catSad = true;
+    } else if (catAsleep) {
+        catStatus = `<p style="color: blue; font-weight: bold;">Your cat is sleeping... 😴</p>`;
+    }
+
+    catPanel.innerHTML = `
+        <h3>🐱 Cat Care 🐱</h3>
+        <p><strong>Mood:</strong> ${catMood} ${catSad ? "😿" : "😊"}</p>
+        <p><strong>Health:</strong> ${catHealth} ${catAlive ? "" : "💀"}</p>
+        <p><strong>Food:</strong> ${catFood} 🍖 | <strong>Water:</strong> ${catWater} 💧</p>
+        ${catStatus}
+        ${catAsleep ? `<button onclick="wakeUp()">⏰ Wake Up</button>` : `
+        <button onclick="feedCat()" ${!catAlive ? "disabled" : ""}>🍖 Feed Cat (-1 Food)</button>
+        <button onclick="giveWater()" ${!catAlive ? "disabled" : ""}>💧 Give Water (-1 Water)</button>
+        <button onclick="play()" ${!catAlive ? "disabled" : ""}>🎾 Play</button>
+        <button onclick="cleanLitter()" ${!catAlive ? "disabled" : ""}>🧹 Clean Litter Box</button>
+        `}
+    `;
+
+    playerPanel.innerHTML = `
+        <h3>🧍 You 🧍</h3>
+        <p><strong>Health:</strong> ${playerHealth} ❤️</p>
+        <p><strong>Money:</strong> $${money}</p>
+        <button onclick="work()">💼 Work (+$5, -10 Cat Mood)</button>
+        <button onclick="buyFood()">🛒 Buy Cat Food ($5 for 3)</button>
+        <button onclick="buyWater()">🛒 Buy Cat Water ($5 for 3)</button>
+        <button onclick="feedSelf()">🍽️ Eat ($10, +20 Health)</button>
+    `;
+}
+
+// Cat interaction functions
+function feedCat() {
+    if (!catAlive || catFood <= 0) return;
+    catFood--;
+    catHealth = Math.min(catHealth + 10, 100);
+    updateUI();
+}
+
+function giveWater() {
+    if (!catAlive || catWater <= 0) return;
+    catWater--;
+    catHealth = Math.min(catHealth + 10, 100);
+    updateUI();
+}
+
+function play() {
+    if (!catAlive || catAsleep) return;
+    catMood = Math.min(catMood + 15, 100);
+    catSad = false; // If played with, reset sadness
+    updateUI();
+}
+
+function cleanLitter() {
+    if (!catAlive || catAsleep) return;
+    catHealth = Math.min(catHealth + 10, 100);
+    updateUI();
+}
+
+// Player functions
+function work() {
+    money += 5;
+    catMood = Math.max(catMood - 10, 0);
+    updateUI();
+}
+
+function buyFood() {
+    if (money >= 5) {
+        money -= 5;
+        catFood += 3;
+    }
+    updateUI();
+}
+
+function buyWater() {
+    if (money >= 5) {
+        money -= 5;
+        catWater += 3;
+    }
+    updateUI();
+}
+
+function feedSelf() {
+    if (money >= 10) {
+        money -= 10;
+        playerHealth = Math.min(playerHealth + 20, 100);
+    }
+    updateUI();
+}
+
+// Make cat fall asleep every 25 seconds
+setInterval(() => {
+    if (!catAlive) return;
+    catAsleep = true;
+    updateUI();
+}, 25000);
+
+// Function to wake up the cat
+function wakeUp() {
+    if (!catAlive) return;
+    
+    let chance = Math.random();
+    if (chance < 0.25) {
+        console.log("The cat hisses at you and falls back asleep! 😾");
+        updateUI();
+        return;
+    }
+
+    console.log("You woke up your cat! 🐱");
+    catAsleep = false;
+    updateUI();
+}
+
+// Stat decay over time
+setInterval(() => {
+    if (!catAlive || catAsleep) return;
+
+    catMood = Math.max(catMood - 5, 0);
+    catHealth = Math.max(catHealth - 3, 0);
+    playerHealth = Math.max(playerHealth - 2, 0);
+
+    if (catMood === 0) console.log("Your cat is sad and might leave!");
+    if (catHealth === 0) {
+        console.log("Your cat has died... Game Over.");
+        catAlive = false;
+    }
+    if (playerHealth === 0) console.log("You have starved... Game Over.");
+
+    updateUI();
+}, 5000); // Stats decrease every 5 seconds
+
+// Challenge: Keep cat happy for 5 minutes
+function startHappinessChallenge() {
+    clearInterval(happinessInterval);
+    happinessTimer = 0;
+    
+    happinessInterval = setInterval(() => {
+        if (catMood >= 95 && catMood <= 100) {
+            happinessTimer += 1;
+            if (happinessTimer >= 60) { // 5 minutes (60 cycles of 5 seconds)
+                money += 100;
+                console.log("🎉 Congratulations! You kept your cat happy for 5 minutes and earned $100!");
+                clearInterval(happinessInterval);
+            }
+        } else {
+            happinessTimer = 0; // Reset if mood drops out of range
+        }
+    }, 5000); // Check every 5 seconds
+}
+
+startHappinessChallenge();
+updateUI();
+
+
